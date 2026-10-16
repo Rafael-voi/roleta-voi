@@ -489,10 +489,20 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
     setTimeout(function () { $('resultado').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
   }
 
-  // Reabriu a página no mesmo aparelho: volta direto ao resultado
+  // Reabriu a página no mesmo aparelho: volta ao resultado, se ele ainda existir na planilha
   (function () {
     var salvo = ls('voi_res');
-    if (salvo) { try { var r = JSON.parse(salvo); r.jaParticipou = true; abrirRoda(r); } catch (e) {} }
+    if (!salvo) return;
+    var r;
+    try { r = JSON.parse(salvo); } catch (e) { return; }
+    r.jaParticipou = true;
+    google.script.run
+      .withSuccessHandler(function (c) {
+        if (c && c.existe) { r.revelado = r.revelado || c.revelado; abrirRoda(r); return; }
+        try { localStorage.removeItem('voi_res'); } catch (e) {}
+      })
+      .withFailureHandler(function () { abrirRoda(r); })
+      .consultarCodigo(r.codigo);
   })();
 
   document.fonts && document.fonts.ready.then(desenhar);
