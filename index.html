@@ -109,7 +109,7 @@
       <span>Autorizo a VOI Consultoria a usar meus dados para contato sobre o prêmio e sobre seus serviços (mentoria e tráfego pago para advogados), conforme a LGPD. Posso pedir a exclusão a qualquer momento.</span>
     </label>
 
-    <button class="btn" id="b-enviar">Liberar meu giro</button>
+    <button class="btn" id="b-enviar">Liberar a roleta</button>
     <div class="erro" id="erro"></div>
   </div>
 
@@ -120,7 +120,7 @@
     <p class="sub" id="cod-sub">Enviamos um código de 6 dígitos.</p>
     <input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"
       style="text-align:center;font-size:30px;letter-spacing:.4em;font-weight:800;margin-top:10px">
-    <button class="btn" id="b-confirmar">Liberar meu giro</button>
+    <button class="btn" id="b-confirmar">Liberar a roleta</button>
     <div class="erro" id="erro2"></div>
     <p class="rodape"><a href="#" id="reenviar">Reenviar código</a> · <a href="#" id="corrigir" style="color:var(--cinza);font-weight:500">Corrigir número</a></p>
   </div>
@@ -129,7 +129,7 @@
   <div class="tela" id="t-roda">
     <h1 id="ola">Olá!</h1>
     <div class="traco"></div>
-    <p class="sub" id="ola-sub">Seu giro está liberado.</p>
+    <p class="sub" id="ola-sub">A roleta está liberada.</p>
     <div class="palco">
       <div class="roda-box"><div class="ponteiro"></div><canvas id="roda"></canvas></div>
       <button class="btn ouro" id="b-girar">Girar a roleta</button>
@@ -380,17 +380,18 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
       nome: $('nome').value, email: $('email').value, whatsapp: $('zap').value,
       dor: $('dor').value, interesse: int ? int.value : '', lgpd: $('lgpd').checked, dispositivo: dev
     };
+    if (!/^[1-9]{2}9\d{8}$/.test(f.whatsapp.replace(/\D/g, ''))) { $('erro').textContent = 'Confira o WhatsApp: digite o DDD + número do celular, ex.: (19) 99999-9999.'; $('zap').focus(); return; }
     if (!f.interesse) { $('erro').textContent = 'Escolha o que mais te interessa agora.'; return; }
-    var b = this; b.disabled = true; b.textContent = 'Liberando...';
+    var b = this; b.disabled = true; b.textContent = 'Enviando...';
     google.script.run
       .withSuccessHandler(function (r) {
-        b.disabled = false; b.textContent = 'Liberar meu giro';
+        b.disabled = false; b.textContent = 'Liberar a roleta';
         if (r.erro) { $('erro').textContent = r.erro; return; }
         if (r.precisaCodigo) { pedirCodigo(r); return; }
         abrirRoda(r);
       })
       .withFailureHandler(function () {
-        b.disabled = false; b.textContent = 'Liberar meu giro';
+        b.disabled = false; b.textContent = 'Liberar a roleta';
         $('erro').textContent = 'Conexão instável. Tente de novo.';
       })
       .registrar(f);
@@ -415,12 +416,12 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
     b.disabled = true; b.textContent = 'Conferindo...'; $('erro2').textContent = '';
     google.script.run
       .withSuccessHandler(function (r) {
-        b.disabled = false; b.textContent = 'Liberar meu giro';
+        b.disabled = false; b.textContent = 'Liberar a roleta';
         if (r.erro) { $('erro2').textContent = r.erro; return; }
         abrirRoda(r);
       })
       .withFailureHandler(function () {
-        b.disabled = false; b.textContent = 'Liberar meu giro';
+        b.disabled = false; b.textContent = 'Liberar a roleta';
         $('erro2').textContent = 'Conexão instável. Tente de novo.';
       })
       .confirmarCodigo(ultimoForm.whatsapp, $('otp').value);
@@ -445,7 +446,7 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
     mostrar('t-roda');
     desenhar();
     if (r.jaParticipou && r.revelado) { mostrarResultado(); $('ola-sub').textContent = 'Você já girou. Este é o seu prêmio:'; return; }
-    $('ola-sub').textContent = r.jaParticipou ? 'Seu giro ainda está guardado. Gire agora.' : 'Seu giro está liberado. Boa sorte!';
+    $('ola-sub').textContent = r.jaParticipou ? 'Sua vez ainda está guardada. Gire agora.' : 'A roleta está liberada. Boa sorte!';
   }
 
   $('b-girar').addEventListener('click', function () {
