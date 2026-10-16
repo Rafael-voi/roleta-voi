@@ -96,7 +96,7 @@
   <div class="banner" id="banner"><div class="t" id="b-tag"></div><div class="n" id="b-nome"></div><div class="p" id="b-premio"></div></div>
 </div>
 
-<div id="dica" style="position:absolute;right:1.5vw;top:1.5vh;z-index:5;font-size:.8vw;color:var(--bronze-c);background:rgba(5,32,45,.7);padding:.6vh .8vw;border-radius:.4vw;transition:opacity 1s">Duplo clique: tela cheia</div>
+<div id="dica" style="position:absolute;right:1.5vw;top:1.5vh;z-index:5;font-size:1.1vw;color:var(--bronze-c);background:rgba(5,32,45,.7);padding:.6vh .8vw;border-radius:.4vw;transition:opacity 1s">Dê dois cliques na tela: tela cheia e som</div>
 <div class="rodape">
   <div class="l1">CONHECIMENTO, ESTRUTURA E RESULTADOS PARA CADA FASE DO SEU ESCRITÓRIO.</div>
   <div class="l2">VOI CONSULTORIA · RAFAEL IZIDORO · MENTORIA ESTRATÉGICA PARA ADVOGADOS</div>
@@ -242,6 +242,8 @@ function rodaDesenhar(cv, rot) {
 }
 
 var _audio = null;
+var RODA_VOLUME = 0.06; // a TV aumenta
+function rodaSomAtivo() { return !!(_audio && _audio.state === 'running'); }
 function rodaAudioInit() {
   try { _audio = _audio || new (window.AudioContext || window.webkitAudioContext)(); _audio.resume(); } catch (e) {}
 }
@@ -250,9 +252,24 @@ function _tick() {
   try {
     var o = _audio.createOscillator(), g = _audio.createGain();
     o.type = 'square'; o.frequency.value = 1400;
-    g.gain.setValueAtTime(0.06, _audio.currentTime);
+    g.gain.setValueAtTime(RODA_VOLUME, _audio.currentTime);
     g.gain.exponentialRampToValueAtTime(0.0001, _audio.currentTime + 0.035);
     o.connect(g); g.connect(_audio.destination); o.start(); o.stop(_audio.currentTime + 0.04);
+  } catch (e) {}
+}
+
+/** Som de prêmio quando a roda para: três notas subindo. */
+function rodaSomFinal() {
+  if (!_audio) return;
+  try {
+    [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
+      var o = _audio.createOscillator(), g = _audio.createGain(), t = _audio.currentTime + i * 0.12;
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(RODA_VOLUME * 4, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (i === 3 ? 0.9 : 0.3));
+      o.connect(g); g.connect(_audio.destination); o.start(t); o.stop(t + 1);
+    });
   } catch (e) {}
 }
 
@@ -321,6 +338,7 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
     bn.className = 'banner vez on';
     rodaGirar(cv, rot, x.premioId, 5200, function (fim) {
       rot = fim;
+      rodaSomFinal();
       document.body.classList.remove('girando');
       document.getElementById('b-tag').textContent = 'PARABÉNS';
       document.getElementById('b-nome').textContent = x.nome + ' ganhou';
@@ -342,14 +360,24 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
   atualizar();
   setInterval(atualizar, 1500);
 
-  // duplo clique em qualquer lugar: tela cheia (some a barra do navegador)
+  // o navegador só libera som depois de um clique na página
+  RODA_VOLUME = 0.14;
+  function ligarSom() {
+    rodaAudioInit();
+    setTimeout(function () { if (rodaSomAtivo()) document.getElementById('dica').style.opacity = 0; }, 300);
+  }
+  document.addEventListener('click', ligarSom);
+  document.addEventListener('keydown', ligarSom);
+
+  // duplo clique em qualquer lugar: tela cheia (some a barra do navegador) e som ligado
   document.addEventListener('dblclick', function () {
+    ligarSom();
     var el = document.documentElement;
     var dentro = document.fullscreenElement || document.webkitFullscreenElement;
     if (dentro) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
     else (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
   });
-  setTimeout(function () { document.getElementById('dica').style.opacity = 0; }, 8000);
+  // a dica só some depois que o som estiver ligado
 </script>
 </body>
 </html>

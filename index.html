@@ -286,6 +286,8 @@ function rodaDesenhar(cv, rot) {
 }
 
 var _audio = null;
+var RODA_VOLUME = 0.06; // a TV aumenta
+function rodaSomAtivo() { return !!(_audio && _audio.state === 'running'); }
 function rodaAudioInit() {
   try { _audio = _audio || new (window.AudioContext || window.webkitAudioContext)(); _audio.resume(); } catch (e) {}
 }
@@ -294,9 +296,24 @@ function _tick() {
   try {
     var o = _audio.createOscillator(), g = _audio.createGain();
     o.type = 'square'; o.frequency.value = 1400;
-    g.gain.setValueAtTime(0.06, _audio.currentTime);
+    g.gain.setValueAtTime(RODA_VOLUME, _audio.currentTime);
     g.gain.exponentialRampToValueAtTime(0.0001, _audio.currentTime + 0.035);
     o.connect(g); g.connect(_audio.destination); o.start(); o.stop(_audio.currentTime + 0.04);
+  } catch (e) {}
+}
+
+/** Som de prêmio quando a roda para: três notas subindo. */
+function rodaSomFinal() {
+  if (!_audio) return;
+  try {
+    [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
+      var o = _audio.createOscillator(), g = _audio.createGain(), t = _audio.currentTime + i * 0.12;
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(RODA_VOLUME * 4, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (i === 3 ? 0.9 : 0.3));
+      o.connect(g); g.connect(_audio.destination); o.start(t); o.stop(t + 1);
+    });
   } catch (e) {}
 }
 
@@ -456,6 +473,7 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
     google.script.run.marcarRevelado(dados.codigo);
     rodaGirar(cv, rot, dados.premioId, 6500, function (fim) {
       rot = fim;
+      rodaSomFinal();
       if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
       mostrarResultado();
       dados.revelado = true; ls('voi_res', JSON.stringify(dados));
