@@ -58,6 +58,7 @@
   .premio .tag { font-size:11px; letter-spacing:.26em; color:var(--vinho); font-weight:700; }
   .premio h2 { font-family:'Playfair Display',serif; font-size:27px; line-height:1.18; margin:8px 0; color:var(--tinta); }
   .premio p { color:var(--cinza); font-size:15px; line-height:1.5; margin:8px 0; }
+  .valor { display:inline-block; margin:2px 0 6px; padding:5px 12px; border-radius:20px; background:var(--bronze-grad); color:var(--navy2); font:700 13px Montserrat,sans-serif; letter-spacing:.04em; }
   .codigo { display:inline-block; margin-top:12px; padding:12px 22px; border:2px dashed var(--bronze); border-radius:12px; background:var(--creme); font:800 26px Montserrat,sans-serif; letter-spacing:.12em; color:var(--navy2); }
   .rodape { text-align:center; color:var(--cinza); font-size:12px; margin-top:22px; }
   .rodape a { color:var(--bronze-txt); font-weight:600; }
@@ -75,7 +76,7 @@
 
   <!-- 1. FORMULÁRIO -->
   <div class="tela ativa" id="t-form">
-    <h1>Advogado, gire e ganhe <em>um diagnóstico do seu escritório.</em></h1>
+    <h1>Advogado, gire e ganhe <em>um Raio-X do seu escritório.</em></h1>
     <div class="traco"></div>
     <p class="sub">Todo mundo leva alguma coisa. 1 giro por pessoa.</p>
 
@@ -87,6 +88,14 @@
 
     <label for="zap">WhatsApp</label>
     <input id="zap" type="tel" inputmode="tel" autocomplete="tel" placeholder="(19) 99999-9999">
+
+    <label>Quantas pessoas trabalham no seu escritório?</label>
+    <div class="chips" id="tamanho">
+      <button type="button" class="chip">Só eu</button>
+      <button type="button" class="chip">2 a 5</button>
+      <button type="button" class="chip">6 a 15</button>
+      <button type="button" class="chip">Mais de 15</button>
+    </div>
 
     <label>Sua maior dificuldade na advocacia hoje</label>
     <div class="chips" id="chips">
@@ -100,13 +109,13 @@
     <textarea id="dor" placeholder="Toque acima ou escreva com suas palavras"></textarea>
 
     <label>O que mais te interessa agora?</label>
+    <label class="opc"><input type="radio" name="int" value="Raio-X 4 Pés do escritório"> Raio-X 4 Pés do escritório, com o Rafael</label>
     <label class="opc"><input type="radio" name="int" value="Diagnóstico de tráfego pago"> Diagnóstico de tráfego pago</label>
-    <label class="opc"><input type="radio" name="int" value="Diagnóstico de estruturação do escritório"> Diagnóstico de estruturação do escritório</label>
     <label class="opc"><input type="radio" name="int" value="Imersão Open VOI"> Imersão presencial Open VOI (comercial e estruturação)</label>
     <label class="opc"><input type="radio" name="int" value="Copo do evento"> Copo personalizado do evento</label>
 
     <label class="lgpd"><input type="checkbox" id="lgpd">
-      <span>Autorizo a VOI Consultoria a usar meus dados para contato sobre o prêmio e sobre seus serviços (mentoria e tráfego pago para advogados), conforme a LGPD. Posso pedir a exclusão a qualquer momento.</span>
+      <span>Autorizo a VOI Consultoria a usar meus dados para contato pelo WhatsApp e e-mail sobre o prêmio e sobre seus serviços (mentoria e tráfego pago para advogados), conforme a LGPD. Posso pedir a exclusão a qualquer momento.</span>
     </label>
 
     <button class="btn" id="b-enviar">Liberar a roleta</button>
@@ -137,6 +146,7 @@
     <div class="premio" id="resultado" style="display:none">
       <div class="tag">VOCÊ GANHOU</div>
       <h2 id="r-premio"></h2>
+      <div class="valor" id="r-valor" style="display:none"></div>
       <p id="r-instr"></p>
       <div class="codigo" id="r-codigo"></div>
       <p class="rodape" style="margin-top:14px">Tire um print desta tela.</p>
@@ -180,12 +190,12 @@ var RODA_SEG = [
   { id: 'diag_trafego',  l1: 'DIAGNÓSTICO', l2: 'TRÁFEGO PAGO' },
   { id: 'brinde',        l1: 'BRINDE',      l2: 'VOI' },
   { id: 'openvoi',       l1: 'IMERSÃO',     l2: 'OPEN VOI' },
-  { id: 'diag_mentoria', l1: 'DIAGNÓSTICO', l2: 'ESCRITÓRIO' },
+  { id: 'diag_mentoria', l1: 'RAIO-X',      l2: '4 PÉS' },
   { id: 'copo',          l1: 'COPO',        l2: 'DO EVENTO' },
   { id: 'diag_trafego',  l1: 'DIAGNÓSTICO', l2: 'TRÁFEGO PAGO' },
   { id: 'brinde',        l1: 'BRINDE',      l2: 'VOI' },
   { id: 'openvoi',       l1: 'IMERSÃO',     l2: 'OPEN VOI' },
-  { id: 'diag_mentoria', l1: 'DIAGNÓSTICO', l2: 'ESCRITÓRIO' }
+  { id: 'diag_mentoria', l1: 'RAIO-X',      l2: '4 PÉS' }
 ];
 var RODA_COR = {
   navy2: '#05202D', navy: '#0C3242', petroleo: '#123B4C',
@@ -353,11 +363,12 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
 
   var INSTR = {
     copo: 'Mostre este código no stand e retire seu copo agora.',
-    openvoi: 'Nossa equipe vai te chamar no WhatsApp com as datas da imersão na sede da VOI. Vagas limitadas.',
-    diag_trafego: 'Nossa equipe vai te chamar no WhatsApp para agendar a análise do seu escritório no digital.',
-    diag_mentoria: 'Nossa equipe vai te chamar no WhatsApp para agendar o diagnóstico da estrutura do seu escritório.',
+    diag_mentoria: 'Uma análise individual com o Rafael Izidoro dos 4 pés do seu escritório: números, equipe, processos e comercial. Você vai receber os detalhes no seu WhatsApp, e nossa equipe chama você para agendar a call.',
+    openvoi: 'Uma imersão presencial na sede da VOI Advogados para ver por dentro como funciona o escritório. Você vai receber os detalhes no seu WhatsApp e, em breve, as datas.',
+    diag_trafego: 'O time que gerencia o tráfego da VOI analisa como seu escritório capta clientes no digital. Você vai receber os detalhes no seu WhatsApp, e nossa equipe chama você para agendar.',
     brinde: 'Mostre este código no stand e retire seu brinde.'
   };
+  var VALOR = { diag_mentoria: 'Valor de referência: R$ 1.500' };
   var $ = function (id) { return document.getElementById(id); };
   var cv = $('roda'), rot = 0, dados = null;
 
@@ -371,12 +382,21 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
   window.addEventListener('resize', desenhar);
   if (_rodaMarca) _rodaMarca.addEventListener('load', desenhar);
 
+  // tamanho do escritório (escolha única)
+  var tamanho = '';
+  $('tamanho').addEventListener('click', function (e) {
+    if (!e.target.classList.contains('chip')) return;
+    Array.prototype.forEach.call(this.querySelectorAll('.chip'), function (c) { c.classList.remove('on'); });
+    e.target.classList.add('on');
+    tamanho = e.target.textContent;
+  });
+
   // chips de dor
   $('chips').addEventListener('click', function (e) {
     if (!e.target.classList.contains('chip')) return;
     e.target.classList.toggle('on');
-    var sel = Array.prototype.map.call(document.querySelectorAll('.chip.on'), function (c) { return c.textContent; });
-    var livre = $('dor').value.split(' | ').filter(function (x) { return x && !Array.prototype.some.call(document.querySelectorAll('.chip'), function (c) { return c.textContent === x; }); });
+    var sel = Array.prototype.map.call(document.querySelectorAll('#chips .chip.on'), function (c) { return c.textContent; });
+    var livre = $('dor').value.split(' | ').filter(function (x) { return x && !Array.prototype.some.call(document.querySelectorAll('#chips .chip'), function (c) { return c.textContent === x; }); });
     $('dor').value = sel.concat(livre).join(' | ');
   });
 
@@ -394,10 +414,11 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
     $('erro').textContent = '';
     var int = document.querySelector('input[name=int]:checked');
     var f = ultimoForm = {
-      nome: $('nome').value, email: $('email').value, whatsapp: $('zap').value,
+      nome: $('nome').value, email: $('email').value, whatsapp: $('zap').value, tamanho: tamanho,
       dor: $('dor').value, interesse: int ? int.value : '', lgpd: $('lgpd').checked, dispositivo: dev
     };
     if (!/^[1-9]{2}9\d{8}$/.test(f.whatsapp.replace(/\D/g, ''))) { $('erro').textContent = 'Confira o WhatsApp: digite o DDD + número do celular, ex.: (19) 99999-9999.'; $('zap').focus(); return; }
+    if (!f.tamanho) { $('erro').textContent = 'Diga quantas pessoas trabalham no seu escritório.'; return; }
     if (!f.interesse) { $('erro').textContent = 'Escolha o que mais te interessa agora.'; return; }
     var b = this; b.disabled = true; b.textContent = 'Enviando...';
     google.script.run
@@ -483,6 +504,7 @@ function rodaGirar(cv, rotAtual, premioId, duracao, aoTerminar) {
   function mostrarResultado() {
     $('b-girar').style.display = 'none';
     $('r-premio').textContent = dados.premio;
+    if (VALOR[dados.premioId]) { $('r-valor').textContent = VALOR[dados.premioId]; $('r-valor').style.display = 'inline-block'; }
     $('r-instr').textContent = INSTR[dados.premioId] || 'Mostre este código no stand.';
     $('r-codigo').textContent = dados.codigo;
     $('resultado').style.display = 'block';
